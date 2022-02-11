@@ -70,3 +70,4 @@ if __name__ == "__main__":
     print(encode("It even works with 😀s thanks to UTF-8", 16).decode(encoding))
 
    
+   

@@ -1,4 +1,4 @@
-
+# Teste Compressor
 
 def elements_in_array(check_elements, elements):
     i = 0
