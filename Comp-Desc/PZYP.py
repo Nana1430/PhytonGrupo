@@ -1,3 +1,4 @@
+# Compressor e descompressor
 #imports
 import sys
 
