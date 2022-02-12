@@ -2,6 +2,7 @@
 
 #imports
 import sys
+import os.path
 
 # Compressor
 def elements_in_array(check_elements, elements):
@@ -118,18 +119,27 @@ def decode(text):
     return bytes(output)
 #:
 
+def compress_file(fich):
+    if os.path.exists(fich):
+        text_file = open(fich,"r")
+        compressed_file = open(fich.rsplit('.', 1)[0]+".LZS", "w")
+        compressed_file.write(str(encode(text_file.read(), 1024)))
+        print("O ficheiro comprimido", fich.rsplit('.', 1)[0]+".LZS", "foi criado !")
+    else:
+        print("O ficheiro especificado", fich, "não existe!")
+
 def sys_argv_func(*args):
     if len(sys.argv) <= 1 or len(sys.argv) >= 4:
-        print("Utilização: PYZP", "[-d](descomprime)", 
+        print("Utilização: PYZP", "[-d](para descomprimir - opcional)", 
             "ficheiro", file=sys.stderr)
         sys.exit(2)
     #:
-    if len(sys.argv) == 2: 					# only one text argument (compress)
-        print(encode(sys.argv[1], 1024).decode(encoding))
+    if len(sys.argv) == 2: 					# only the file argument (compress)
+        compress_file(sys.argv[1])
     #:
     if len(sys.argv) == 3: 					# 2 arguments, testing if is -d
         if sys.argv[1].lower() != "-d":
-            print("Argumento desconhecido",sys.argv[1], " Utilização: PYZP", "[-d](descomprime)", 
+            print("Argumento desconhecido",sys.argv[1], " Utilização: PYZP", "[-d](para descomprimir - opcional)", 
             "ficheiro", file=sys.stderr)
             sys.exit(2)
         else:
@@ -139,6 +149,8 @@ def sys_argv_func(*args):
 
 if __name__ == "__main__":
     sys_argv_func(sys.argv)
+    
+    
 #:
 
 
