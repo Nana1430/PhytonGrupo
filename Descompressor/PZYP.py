@@ -1,5 +1,7 @@
-# Teste Compressor
+#imports
+import sys
 
+# Compressor
 def elements_in_array(check_elements, elements):
     i = 0
     offset = 0
@@ -63,13 +65,71 @@ def encode(text, max_sliding_window_size=4096):
     
     return bytes(output)
 
+encoding = "utf-8"
 
+#Descompressor
+def decode(text):
+	
+    text_bytes = text.encode(encoding) # The text encoded as bytes
+    output = [] # The output characters
+
+    inside_token = False
+    scanning_offset = True
+
+    length = [] # Length number encoded as bytes
+    offset = [] # Offset number encoded as bytes
+
+    for char in text_bytes:
+        if char == "<".encode(encoding)[0]:
+            inside_token = True # We're now inside a token
+            scanning_offset = True # We're now looking for the length number
+        elif char == ",".encode(encoding)[0] and inside_token:
+            scanning_offset = False
+        elif char == ">".encode(encoding)[0]:
+            inside_token = False # We're no longer inside a token
+
+            # Convert length and offsets to an integer
+            length_num = int(bytes(length).decode(encoding))
+            offset_num = int(bytes(offset).decode(encoding))
+
+            # Get text that the token represents
+            referenced_text = output[-offset_num:][:length_num]
+
+            output.extend(referenced_text) # referenced_text is a list of bytes so we use extend to add each one to output
+
+            # Reset length and offset
+            length, offset = [], []
+        elif inside_token:
+            if scanning_offset:
+                offset.append(char)
+            else:
+                length.append(char)
+        else:
+            output.append(char) # Add the character to our output
+
+    
+    return bytes(output)
+
+
+def sys_argv_func(*args):
+    if len(sys.argv) <= 1 or len(sys.argv) >= 4:
+        print("Utilização: PYZP", "[-d](descomprime)", 
+            "ficheiro", file=sys.stderr)
+        sys.exit(2)
+    if len(sys.argv) == 2: # only one text argument (compress)
+        print(encode(sys.argv[1], 1024).decode(encoding))
+    if len(sys.argv) == 3: # 2 arguments, testing if is -d
+        if sys.argv[1].lower() != "-d":
+            print("Argumento desconhecido",sys.argv[1], " Utilização: PYZP", "[-d](descomprime)", 
+            "ficheiro", file=sys.stderr)
+            sys.exit(2)
+        else:
+            print(decode(sys.argv[2]).decode(encoding))
 
 
 if __name__ == "__main__":
-    print(encode("ABCDEF ABCDEF", 4096))
-    print(encode("supercalifragilisticexpialidocious supercalifragilisticexpialidocious", 1024).decode(encoding))
-    print(encode("LZSS will take over the world!", 256).decode(encoding))
-    print(encode("It even works with 😀s thanks to UTF-8", 16).decode(encoding))
+    sys_argv_func(sys.argv)
+
+
 
    
