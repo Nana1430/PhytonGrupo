@@ -103,8 +103,8 @@ def decode(text):
             length, offset = [], []
 	
         elif inside_token:
-	    if offset == "":
-		raise ValueError(f'PZYPError.')
+            if offset == "":
+                raise ValueError(f'PZYPError.')
 	    #:
             if scanning_offset:
                 offset.append(char)
