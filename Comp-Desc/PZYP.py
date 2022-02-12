@@ -1,4 +1,5 @@
-# Compressor e descompressor
+# Compressor e descompressor -teste
+
 #imports
 import sys
 
