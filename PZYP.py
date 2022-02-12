@@ -1,6 +1,7 @@
 # Compressor e descompressor -teste
 
 #imports
+
 import sys
 import os.path
 
@@ -121,12 +122,28 @@ def decode(text):
 
 def compress_file(fich):
     if os.path.exists(fich):
-        text_file = open(fich,"r")
+        text_File = open(fich,"r")
         compressed_file = open(fich.rsplit('.', 1)[0]+".LZS", "w")
-        compressed_file.write(str(encode(text_file.read(), 1024)))
+        compressed_file.write(str(encode(text_File.read(), 1024).decode('utf-8')))
         print("O ficheiro comprimido", fich.rsplit('.', 1)[0]+".LZS", "foi criado !")
+        text_File.close()
+        compressed_file.close()
+
     else:
         print("O ficheiro especificado", fich, "não existe!")
+
+def decompress_file(fich):
+    if os.path.exists(fich):
+        compressed_file = open(fich,"r")
+        text_File = open(fich.rsplit('.', 1)[0]+".txt", "w")
+
+        text_File.write(str(decode(compressed_file.read() ).decode('utf-8') ))
+
+        print("O ficheiro foi descomprimido!")
+    else:
+        print("O ficheiro especificado", fich, "não existe!")    
+
+
 
 def sys_argv_func(*args):
     if len(sys.argv) <= 1 or len(sys.argv) >= 4:
@@ -143,7 +160,7 @@ def sys_argv_func(*args):
             "ficheiro", file=sys.stderr)
             sys.exit(2)
         else:
-            print(decode(sys.argv[2]).decode(encoding))
+            decompress_file(sys.argv[2])
 	#:
     #:
 
