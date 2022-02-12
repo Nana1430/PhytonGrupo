@@ -63,9 +63,9 @@ def encode(text, max_sliding_window_size=4096):
         i += 1
     #:
     return bytes(output)
-#:
+
 if __name__ == "__main__":
-    print(encode("ABCDEF ABCDEF", 4096).decode(encoding))
+    print(encode("ABCDEF ABCDEF", 4096))
     print(encode("supercalifragilisticexpialidocious supercalifragilisticexpialidocious", 1024).decode(encoding))
     print(encode("LZSS will take over the world!", 256).decode(encoding))
     print(encode("It even works with 😀s thanks to UTF-8", 16).decode(encoding))
