@@ -29,19 +29,23 @@ def decode(text):
 
             output.extend(referenced_text) # referenced_text is a list of bytes so we use extend to add each one to output
 
-            # Reset length and offset
-            length, offset = [], []
+            length, offset = [], []    # Reset length and offset
+
         elif inside_token:
+            if offset < 0:
+                raise ValueError(f'PZYPError.')
+            #:    
             if scanning_offset:
                 offset.append(char)
             else:
                 length.append(char)
+            #:
         else:
             output.append(char) # Add the character to our output
-
-    
+        #:
+    #:
     return bytes(output)
-
+#:
 if __name__ == "__main__":
     print(decode("supercalifragilisticexpialidocious <35,34>").decode(encoding))
     print(decode("tex<3,1>s.forEach(<8,1>un<6,1>ti<13,1>n <10,1>t<24,3>Obj)<10,1>{<12,1> <14,1> <4,3> <8,7> <28,1>c<42,1>nv<45,1>s<52,1>r<58,1>m<54,1>v<62,1>(<41,8>;<40,24>add<37,23>}<53,2>").decode(encoding))
