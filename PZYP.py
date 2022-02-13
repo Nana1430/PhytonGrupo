@@ -135,7 +135,7 @@ def compress_file(fich):
 def decompress_file(fich):
     if os.path.exists(fich):
         compressed_file = open(fich,"r")
-        text_File = open(fich.rsplit('.', 1)[0]+".txt", "w")
+        text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "w")
 
         text_File.write(str(decode(compressed_file.read() ).decode('utf-8') ))
 
