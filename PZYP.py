@@ -25,7 +25,7 @@ def elements_in_array(check_elements, elements):
 encoding = "utf-8"
 
 def encode(text, max_sliding_window_size=4096):
-    text_bytes = text.encode(encoding)
+    text_bytes = text
 
     search_buffer = [] # Array of integers, representing bytes
     check_characters = [] # Array of integers, representing bytes
@@ -122,9 +122,9 @@ def decode(text):
 
 def compress_file(fich):
     if os.path.exists(fich):
-        text_File = open(fich,"r")
-        compressed_file = open(fich.rsplit('.', 1)[0]+".LZS", "w")
-        compressed_file.write(str(encode(text_File.read(), 1024).decode('utf-8')))
+        text_File = open(fich,"rb")
+        compressed_file = open(fich.rsplit('.', 1)[0]+".LZS", "wb")
+        compressed_file.write(encode(text_File.read(), 1024))
         print("O ficheiro comprimido", fich.rsplit('.', 1)[0]+".LZS", "foi criado !")
         text_File.close()
         compressed_file.close()
