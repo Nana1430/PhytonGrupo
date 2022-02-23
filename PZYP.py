@@ -151,7 +151,6 @@ def decode(text):
         else:
             output.append(char) # Add the character to our output
 	#:
-    
     return bytes(output)
 #:
 
@@ -204,7 +203,6 @@ def set_level(level):
                 comp_lvl = 32768
     return comp_lvl
                     
-
 def decompress_file(fich, password, summary):
     global compressed_file
     if password is None:
@@ -220,8 +218,8 @@ def decompress_file(fich, password, summary):
         else:
             print("The specified file", fich, "does not exists!")
     else:
-        print("\nDescompressão - Com password")
-        print(f' Sumario: [{summary}]'f' Ficheiro: [{fich}]\n')
+        print("\nDecompress with password")
+        print(f' Summary: [{summary}]'f' File: [{fich}]\n')
         if os.path.exists(fich):
             compressed_file = open(fich,"rb")
             text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "wb")
@@ -233,7 +231,6 @@ def decompress_file(fich, password, summary):
             print("The specified file", fich, "does not exists!")
 
 def _lzs_encode(window):
-    
     with lzss_io.io.BytesIO() as out:
         with lzss_io.LZSSWriter(out, ctx=ctx) as writer:
             for byte_int in window:
