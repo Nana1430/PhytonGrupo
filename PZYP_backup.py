@@ -1,28 +1,9 @@
 # Compressor e descompressor -teste
 
 #imports
+
 import sys
 import os.path
-import lzss_io
-import pzip-docopt
-
-# da referencia lzss_io
-UNENCODED_STRING_SIZE = 8   # in bits
-ENCODED_OFFSET_SIZE = 12    # in bits
-ENCODED_LEN_SIZE = 4        # in bits
-ENCODED_STRING_SIZE = ENCODED_OFFSET_SIZE + ENCODED_LEN_SIZE  # in bits
-
-WINDOW_SIZE = 2 ** ENCODED_OFFSET_SIZE        # in bytes
-BREAK_EVEN_POINT = ENCODED_STRING_SIZE // 8   # in bytes
-MIN_STRING_SIZE = BREAK_EVEN_POINT + 1        # in bytes
-MAX_STRING_SIZE = 2 ** ENCODED_LEN_SIZE - 1  + MIN_STRING_SIZE  # in bytes
-
-ctx = lzss_io.PZYPContext(
-        encoded_offset_size=4,   # janela terá 16 bytes
-        encoded_len_size=3       # comprimentos de 8 + 1 - 1 = 8 bytes
-    )
-
-DEFAULT_EXT= 'LZS'    
 
 # Compressor
 def elements_in_array(check_elements, elements):
@@ -43,7 +24,8 @@ def elements_in_array(check_elements, elements):
 #:
 encoding = "utf-8"
 
-def encode(text_bytes, max_sliding_window_size=4096):
+def encode(text, max_sliding_window_size=4096):
+    text_bytes = text
 
     search_buffer = [] # Array of integers, representing bytes
     check_characters = [] # Array of integers, representing bytes
@@ -70,11 +52,10 @@ def encode(text_bytes, max_sliding_window_size=4096):
                     output.extend(check_characters) 		# Output the characters
                 else:
                     output.extend(token.encode(encoding)) 	# Output our token
-
                 #:
                 search_buffer.extend(check_characters) 		# Add the characters to our search buffer   
             else:
-                output.extend(check_characters) 		# Output the character
+                output.extend(check_characters) 		# Output the character  
                 search_buffer.extend(check_characters) 		# Add the characters to our search buffer   
 	    #:
             check_characters = []   
@@ -86,15 +67,14 @@ def encode(text_bytes, max_sliding_window_size=4096):
 	#:
         i += 1
     #:
-    _lzs_encode(bytes(output))
-    #return bytes(output) 
+    return bytes(output)
 #:
 encoding = "utf-8"
 
 #Descompressor
 def decode(text):
 	
-    text_bytes = text  				# The text encoded as bytes
+    text_bytes = text.encode(encoding) 				# The text encoded as bytes
     output = [] 						# The output characters
 
     inside_token = False
@@ -143,28 +123,26 @@ def decode(text):
 def compress_file(fich):
     if os.path.exists(fich):
         text_File = open(fich,"rb")
-        global compressed_file
-        compressed_file = open(sys.argv[1].rsplit('.', 1)[0]+DEFAULT_EXT, "wb")
-        encode(text_File.read(), 1024)
-        print("O ficheiro comprimido", fich.rsplit('.', 1)[0]+DEFAULT_EXT, "foi criado !")
+        compressed_file = open(fich.rsplit('.', 1)[0]+".LZS", "wb")
+        compressed_file.write(encode(text_File.read(), 1024))
+        print("O ficheiro comprimido", fich.rsplit('.', 1)[0]+".LZS", "foi criado !")
         text_File.close()
         compressed_file.close()
+
     else:
         print("O ficheiro especificado", fich, "não existe!")
 
 def decompress_file(fich):
     if os.path.exists(fich):
-        global compressed_file
-        compressed_file = open(fich,"rb")
-        text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "wb")
-        dados=compressed_file.read()
-        #print(read_lzs_file(dados))
-        print(decode(read_lzs_file(dados)))
-        text_File.write(decode(read_lzs_file(dados)))
-        print()
+        compressed_file = open(fich,"r")
+        text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "w")
+
+        text_File.write(str(decode(compressed_file.read() ).decode('utf-8') ))
+
         print("O ficheiro foi descomprimido!")
     else:
         print("O ficheiro especificado", fich, "não existe!")    
+
 
 
 def sys_argv_func(*args):
@@ -186,32 +164,10 @@ def sys_argv_func(*args):
 	#:
     #:
 
-def _lzs_encode(window):
-    
-    with lzss_io.io.BytesIO() as out:
-        with lzss_io.LZSSWriter(out, ctx=ctx) as writer:
-            for byte_int in window:
-                writer.write(bytes((byte_int,)))
-        print('\n----\n')
-        print('O ficheiro de saída tem os seguintes dados: ')
-        out.seek(0)
-        dados_comp = out.read()
-        print(dados_comp)
-        compressed_file.write(dados_comp)
-
-def read_lzs_file(comp_file):
-    dados = []
-    print('Vamos descodificar os dados anteriores')
-    with lzss_io.io.BytesIO(bytes(comp_file)) as in_:
-        with lzss_io.LZSSReader(in_, ctx=ctx) as reader:
-            for encoded_flag, elemento in reader:
-                dados.extend(elemento)
-    return(dados)
-
 if __name__ == "__main__":
-    #sys_argv_func(sys.argv)
-
-   
+    sys_argv_func(sys.argv)
+    
+    
 #:
 
 

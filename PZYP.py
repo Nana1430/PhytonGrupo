@@ -1,9 +1,43 @@
 # Compressor e descompressor -teste
+'''
+Usage:
+    pzip [-c [-l LEVEL] | -d | -h] [-s] [-p PASSWORD] FILE
 
+Operation:
+    -c, --encode, --compress            Compress FILE whith PZYP
+    -d, --decode, --decompress          Decompress FILE compressed with PZYP
+
+Options:
+    -l, LEVEL                           Compression level [default: 2] ------------> Sugere uso no Cabeçalho que é sempre gerado
+    -s, --summary                       Resume of compressed file      ------------> Sugere uso no Cabeçalho que é sempre gerado
+    -h, --help                          Shows this help message and exits.
+    -p PASSWORD, --password=PASSWORD    An optional password to encrypt the file (compress only)
+
+    FILE                                The path to the file to compress / decompress
+'''
 #imports
-
+from docopt import docopt
 import sys
 import os.path
+import lzss_io
+
+# da referencia lzss_io
+UNENCODED_STRING_SIZE = 8   # in bits
+ENCODED_OFFSET_SIZE = 12    # in bits
+ENCODED_LEN_SIZE = 4        # in bits
+ENCODED_STRING_SIZE = ENCODED_OFFSET_SIZE + ENCODED_LEN_SIZE  # in bits
+
+WINDOW_SIZE = 2 ** ENCODED_OFFSET_SIZE        # in bytes
+BREAK_EVEN_POINT = ENCODED_STRING_SIZE // 8   # in bytes
+MIN_STRING_SIZE = BREAK_EVEN_POINT + 1        # in bytes
+MAX_STRING_SIZE = 2 ** ENCODED_LEN_SIZE - 1  + MIN_STRING_SIZE  # in bytes
+
+ctx = lzss_io.PZYPContext(
+        encoded_offset_size=4,   # janela terá 16 bytes
+        encoded_len_size=3       # comprimentos de 8 + 1 - 1 = 8 bytes
+    )
+
+DEFAULT_EXT= 'LZS'    
 
 # Compressor
 def elements_in_array(check_elements, elements):
@@ -24,8 +58,7 @@ def elements_in_array(check_elements, elements):
 #:
 encoding = "utf-8"
 
-def encode(text, max_sliding_window_size=4096):
-    text_bytes = text
+def encode(text_bytes, max_sliding_window_size=4096): #"4096 is default if argument is omited"
 
     search_buffer = [] # Array of integers, representing bytes
     check_characters = [] # Array of integers, representing bytes
@@ -52,10 +85,11 @@ def encode(text, max_sliding_window_size=4096):
                     output.extend(check_characters) 		# Output the characters
                 else:
                     output.extend(token.encode(encoding)) 	# Output our token
+
                 #:
                 search_buffer.extend(check_characters) 		# Add the characters to our search buffer   
             else:
-                output.extend(check_characters) 		# Output the character  
+                output.extend(check_characters) 		# Output the character
                 search_buffer.extend(check_characters) 		# Add the characters to our search buffer   
 	    #:
             check_characters = []   
@@ -67,14 +101,15 @@ def encode(text, max_sliding_window_size=4096):
 	#:
         i += 1
     #:
-    return bytes(output)
+    _lzs_encode(bytes(output))
+    #return bytes(output) 
 #:
 encoding = "utf-8"
 
 #Descompressor
 def decode(text):
 	
-    text_bytes = text.encode(encoding) 				# The text encoded as bytes
+    text_bytes = text  				# The text encoded as bytes
     output = [] 						# The output characters
 
     inside_token = False
@@ -120,55 +155,116 @@ def decode(text):
     return bytes(output)
 #:
 
-def compress_file(fich):
-    if os.path.exists(fich):
-        text_File = open(fich,"rb")
-        compressed_file = open(fich.rsplit('.', 1)[0]+".LZS", "wb")
-        compressed_file.write(encode(text_File.read(), 1024))
-        print("O ficheiro comprimido", fich.rsplit('.', 1)[0]+".LZS", "foi criado !")
-        text_File.close()
-        compressed_file.close()
-
-    else:
-        print("O ficheiro especificado", fich, "não existe!")
-
-def decompress_file(fich):
-    if os.path.exists(fich):
-        compressed_file = open(fich,"r")
-        text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "w")
-
-        text_File.write(str(decode(compressed_file.read() ).decode('utf-8') ))
-
-        print("O ficheiro foi descomprimido!")
-    else:
-        print("O ficheiro especificado", fich, "não existe!")    
-
-
-
-def sys_argv_func(*args):
-    if len(sys.argv) <= 1 or len(sys.argv) >= 4:
-        print("Utilização: PYZP", "[-d](para descomprimir - opcional)", 
-            "ficheiro", file=sys.stderr)
-        sys.exit(2)
-    #:
-    if len(sys.argv) == 2: 					# only the file argument (compress)
-        compress_file(sys.argv[1])
-    #:
-    if len(sys.argv) == 3: 					# 2 arguments, testing if is -d
-        if sys.argv[1].lower() != "-d":
-            print("Argumento desconhecido",sys.argv[1], " Utilização: PYZP", "[-d](para descomprimir - opcional)", 
-            "ficheiro", file=sys.stderr)
-            sys.exit(2)
+def compress_file(fich, level, password, summary):
+    global compressed_file
+    if password is None:
+        print("\nCompression without password")
+        print(f'Level: [{level}] |'f' Summary: [{summary}]'f' File: [{fich}]\n')
+        if os.path.exists(fich):
+            text_File = open(fich,"rb")
+            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "wb")
+            encode(text_File.read(), set_level(int(level)))
+            print("The compressed file", fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "has been sucessfuly created !")
+            text_File.close()
+            compressed_file.close()
         else:
-            decompress_file(sys.argv[2])
-	#:
-    #:
+            print("The specified file", fich, "does not exists!")
+    else:
+        print("\nCompression with password")
+        print(f'Level: [{level}] |'f' Summary: [{summary}]'f' File: [{fich}]\n')
+        if os.path.exists(fich):
+            text_File = open(fich,"rb")
+            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "wb")
+            encode(text_File.read(), set_level(int(level)))
+            print("The compressed file", fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "has been sucessfuly created !")
+            text_File.close()
+            compressed_file.close()
+        else:
+            print("The specified file", fich, "does not exists!")
 
-if __name__ == "__main__":
-    sys_argv_func(sys.argv)
-    
-    
-#:
+def set_level(level):
 
+    if level not in range(1,6):
+        print(f' The specified compression level {level} it is outside possible interval [1-5]')
+        print("Exiting...")
+        sys.exit(2)
+    else:
+        match level:
+            case 1:
+                print("Compression level 1 settings | window 1kb")
+                comp_lvl = 1024
+            case 2:
+                print("Compression level 2 settings | window 4kb")
+                comp_lvl = 4096
+            case 3:
+                print("Compression level 3 settings | window 16kb")
+                comp_lvl = 16384
+            case 4:
+                print("Compression level 4 settings | windows 32kb")
+                comp_lvl = 32768
+    return comp_lvl
+                    
+
+def decompress_file(fich, password, summary):
+    global compressed_file
+    if password is None:
+        print("\nDecompress without password")
+        print(f' Summary: [{summary}]'f' File: [{fich}]\n')
+        if os.path.exists(fich):
+            compressed_file = open(fich,"rb")
+            text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "wb")
+            dados=compressed_file.read()
+            #print(decode(read_lzs_file(dados)))
+            text_File.write(decode(read_lzs_file(dados)))
+            print("The file was decompressed!")
+        else:
+            print("The specified file", fich, "does not exists!")
+    else:
+        print("\nDescompressão - Com password")
+        print(f' Sumario: [{summary}]'f' Ficheiro: [{fich}]\n')
+        if os.path.exists(fich):
+            compressed_file = open(fich,"rb")
+            text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "wb")
+            dados=compressed_file.read()
+            #print(decode(read_lzs_file(dados)))
+            text_File.write(decode(read_lzs_file(dados)))
+            print("The file was decompressed!")
+        else:
+            print("The specified file", fich, "does not exists!")
+
+def _lzs_encode(window):
+    
+    with lzss_io.io.BytesIO() as out:
+        with lzss_io.LZSSWriter(out, ctx=ctx) as writer:
+            for byte_int in window:
+                writer.write(bytes((byte_int,)))
+        #print('O ficheiro de saída tem os seguintes dados: ')
+        out.seek(0)
+        dados_comp = out.read()
+        #print(dados_comp)
+        compressed_file.write(dados_comp)
+
+def read_lzs_file(comp_file):
+    dados = []
+    #print('Vamos descodificar os dados anteriores')
+    with lzss_io.io.BytesIO(bytes(comp_file)) as in_:
+        with lzss_io.LZSSReader(in_, ctx=ctx) as reader:
+            for encoded_flag, elemento in reader:
+                dados.extend(elemento)
+    return(dados)
+
+def main():
+    # docopt saves arguments and options as key:value pairs in a dictionary
+    args = docopt(__doc__, version='0.1')
+    file = args['FILE']
+
+    # do the thing
+    if args['--compress']:
+        compress_file(file, args['-l'], args["--password"],args["--summary"])
+    if args['--decompress']:
+        decompress_file(file, args["--password"],args["--summary"])
+        
+if __name__=='__main__':
+    main()
 
    
