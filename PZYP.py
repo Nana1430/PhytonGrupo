@@ -16,10 +16,12 @@ Options:
     FILE                                The path to the file to compress / decompress
 '''
 #imports
+import struct
 from docopt import docopt
 import sys
 import os.path
 import lzss_io
+import time
 
 # da referencia lzss_io
 UNENCODED_STRING_SIZE = 8   # in bits
@@ -161,9 +163,15 @@ def compress_file(fich, level, password, summary):
         print(f'Level: [{level}] |'f' Summary: [{summary}]'f' File: [{fich}]\n')
         if os.path.exists(fich):
             text_File = open(fich,"rb")
-            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "wb")
-            encode(text_File.read(), set_level(int(level)))
-            print("The compressed file", fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "has been sucessfuly created !")
+            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "wb") #opens in overwrite mode
+            create_header(int(level),fich) #writes header to file
+            if summary == True:
+                compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "rb") #opens file in read mode to read header
+                show_header(compressed_file.read())
+                compressed_file.close()
+            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "ab") #opens in append mode to write data
+            encode(text_File.read(), set_level(int(level))) # Runs encode cicle
+            print("The compressed file", fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "has been sucessfuly created !\n")
             text_File.close()
             compressed_file.close()
         else:
@@ -173,18 +181,25 @@ def compress_file(fich, level, password, summary):
         print(f'Level: [{level}] |'f' Summary: [{summary}]'f' File: [{fich}]\n')
         if os.path.exists(fich):
             text_File = open(fich,"rb")
-            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "wb")
-            encode(text_File.read(), set_level(int(level)))
-            print("The compressed file", fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "has been sucessfuly created !")
+            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "wb") #opens in overwrite mode
+            create_header(int(level),fich) #writes header to file
+            if summary == True:
+                compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "rb") #opens file in read mode to read header
+                show_header(compressed_file.read())
+                compressed_file.close()
+            compressed_file = open(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "ab") #opens in append mode to write data
+            encode(text_File.read(), set_level(int(level))) # Runs encode cicle
+            print("The compressed file", fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, "has been sucessfuly created !\n")
             text_File.close()
             compressed_file.close()
         else:
             print("The specified file", fich, "does not exists!")
 
+
 def set_level(level):
 
-    if level not in range(1,6):
-        print(f' The specified compression level {level} it is outside possible interval [1-5]')
+    if level not in range(1,5):
+        print(f' The specified compression level {level} it is outside possible interval [1-4]')
         print("Exiting...")
         sys.exit(2)
     else:
@@ -210,11 +225,15 @@ def decompress_file(fich, password, summary):
         print(f' Summary: [{summary}]'f' File: [{fich}]\n')
         if os.path.exists(fich):
             compressed_file = open(fich,"rb")
+            if summary == True:
+                show_header(compressed_file.read(262))
             text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "wb")
+            compressed_file.seek(0,0) #reset the file position
+            compressed_file.seek(262,1) # set it to byte 262
             dados=compressed_file.read()
             #print(decode(read_lzs_file(dados)))
             text_File.write(decode(read_lzs_file(dados)))
-            print("The file was decompressed!")
+            print("The file was decompressed!\n")
         else:
             print("The specified file", fich, "does not exists!")
     else:
@@ -222,11 +241,15 @@ def decompress_file(fich, password, summary):
         print(f' Summary: [{summary}]'f' File: [{fich}]\n')
         if os.path.exists(fich):
             compressed_file = open(fich,"rb")
+            if summary == True:
+                show_header(compressed_file.read(262))
             text_File = open(fich.rsplit('.', 1)[0]+"_descomprimido.txt", "wb")
+            compressed_file.seek(0,0) #reset the file position
+            compressed_file.seek(262,1) # set it to byte 262
             dados=compressed_file.read()
             #print(decode(read_lzs_file(dados)))
             text_File.write(decode(read_lzs_file(dados)))
-            print("The file was decompressed!")
+            print("The file was decompressed!\n")
         else:
             print("The specified file", fich, "does not exists!")
 
@@ -238,7 +261,6 @@ def _lzs_encode(window):
         #print('O ficheiro de saída tem os seguintes dados: ')
         out.seek(0)
         dados_comp = out.read()
-        #print(dados_comp)
         compressed_file.write(dados_comp)
 
 def read_lzs_file(comp_file):
@@ -250,12 +272,40 @@ def read_lzs_file(comp_file):
                 dados.extend(elemento)
     return(dados)
 
+def create_header(level,fich):
+    #reverse power
+    match level:
+            case 1:
+                reverse = 10 #(1024)
+            case 2:
+                reverse = 12 #(4096)
+            case 3:
+                reverse = 14 #(16384) 
+            case 4:
+                reverse = 15 #(32768)
+    #timestamp (in seconds) - Double was used / could not set it to 32b integer/big-endian, but total header still uses 262 bytes
+    ts = time.time()
+    file = bytes(fich.rsplit('.', 1)[0]+"."+DEFAULT_EXT, 'utf-8')
+    compressed_file.write(struct.pack('bbd246p',reverse,reverse,ts,file))
+    compressed_file.close()
+
+def show_header(data):
+    #print(data)
+    #print(struct.calcsize("bbd246p"))
+    tup_data = struct.unpack('bbd246p',data)
+    comp_time = (time.strftime('%m/%d/%Y %H:%M:%S'))
+    print("\nHeader data summary:\n")
+    print(f'Name of compressed file : [{tup_data[3].decode("utf-8")}]')
+    print(f'Timestamp : [{tup_data[2]}]')
+    print(f'Window size : [{2 ** tup_data[0]} KB] {tup_data[0]} Bits | length size : [Default]') #lenght size WIP
+    print(f'Compression date / time : [{comp_time}]\n') 
+
 def main():
     # docopt saves arguments and options as key:value pairs in a dictionary
     args = docopt(__doc__, version='0.1')
     file = args['FILE']
 
-    # do the thing
+    # run args
     if args['--compress']:
         compress_file(file, args['-l'], args["--password"],args["--summary"])
     if args['--decompress']:
