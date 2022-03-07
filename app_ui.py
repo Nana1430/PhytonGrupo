@@ -1,3 +1,11 @@
+'''
+Project PZYP
+
+Created by: Ana Graça, Nuno Guerra, Sónia Jardim
+
+Data Entrega: 07/03/2022
+'''
+
 # -*- coding: utf-8 -*-
 
 ################################################################################

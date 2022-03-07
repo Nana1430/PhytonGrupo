@@ -1,7 +1,15 @@
+######################################################
+## Project PZYP
+##
+## Created by: Ana Graça, Nuno Guerra, Sónia Jardim
+##
+## Data Entrega: 07/03/2022
+######################################################
+
 # Compressor e descompressor -teste
 '''
 Usage:
-    pzip [-c [-l LEVEL] | -d | -h] [-s] [-p PASSWORD] FILE
+    pzyp [-c [-l LEVEL] | -d | -h] [-s] [-p PASSWORD] FILE
 
 Operation:
     -c, --encode, --compress            Compress FILE whith PZYP
@@ -14,6 +22,14 @@ Options:
     -p PASSWORD, --password=PASSWORD    An optional password to encrypt the file (compress only)
 
     FILE                                The path to the file to compress / decompress
+'''
+
+'''
+Project PZYP
+
+Created by: Ana Graça, Nuno Guerra, Sónia Jardim
+
+Data Entrega: 07/03/2022
 '''
 #imports
 import struct

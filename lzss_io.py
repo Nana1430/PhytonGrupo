@@ -1,3 +1,13 @@
+'''
+Project PZYP
+
+Created by: Ana Graça, Nuno Guerra, Sónia Jardim
+
+Data Entrega: 07/03/2022
+'''
+
+
+
 import io
 import math
 from typing import Union, BinaryIO, Tuple
@@ -51,8 +61,8 @@ class PZYPContext:
         return self._unencoded_string_size
     #:
     @property
-    def encoded_string_size(self) -> int:
-        return self.encoded_offset_size + self.encoded_len_size  # in bits
+    def encoded_string_size(self) -> int:               
+        return self.encoded_offset_size + self.encoded_len_size         # in bits
     #:
     @property
     def window_size(self) -> int:
